@@ -1,4 +1,5 @@
 .env
 __pycache__/
 *.pyc
-backend/rf_model.joblib
+backend/*.joblib
+backend/*.json
