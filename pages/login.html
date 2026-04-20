@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login </title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--soil:#2C1A0E;--leaf:#2D6A4F;--sprout:#52B788;--harvest:#D4A017;--sky:#E8F5E9;--cream:#FFF8F0;--text:#1A1A1A;--muted:#6B7280;--red:#DC2626;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;min-height:100vh;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;}
+
+  /* LEFT */
+  .left{background:var(--soil);display:flex;flex-direction:column;justify-content:center;padding:4rem;position:relative;overflow:hidden;}
+  .left::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 70% at 30% 35%,rgba(45,106,79,.55) 0%,transparent 70%),radial-gradient(ellipse 50% 50% at 80% 80%,rgba(212,160,23,.25) 0%,transparent 60%);}
+  .panel{position:relative;z-index:1;}
+  .logo-link{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:white;text-decoration:none;display:block;margin-bottom:3rem;}
+  .logo-link span{color:var(--harvest);}
+  .panel h1{font-family:'Playfair Display',serif;font-size:3rem;color:white;line-height:1.1;margin-bottom:1.2rem;}
+  .panel p{color:rgba(255,255,255,.6);font-size:1rem;line-height:1.75;max-width:360px;margin-bottom:3rem;}
+  .panel-stats{display:flex;gap:2rem;}
+  .pstat .v{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;color:var(--sprout);}
+  .pstat .l{font-size:.78rem;color:rgba(255,255,255,.4);margin-top:2px;}
+  .deco{position:absolute;font-size:5rem;opacity:.06;pointer-events:none;}
+
+  /* RIGHT */
+  .right{background:var(--cream);display:flex;align-items:center;justify-content:center;padding:3rem;position:relative;}
+  .back{position:absolute;top:1.5rem;left:1.5rem;color:var(--muted);text-decoration:none;font-size:.83rem;display:flex;align-items:center;gap:.4rem;border:1px solid rgba(0,0,0,.1);border-radius:100px;padding:.35rem .85rem;transition:all .2s;}
+  .back:hover{color:var(--leaf);border-color:rgba(45,106,79,.3);background:var(--sky);}
+
+  .box{width:100%;max-width:420px;}
+  .box h2{font-family:'Playfair Display',serif;font-size:2rem;color:var(--soil);margin-bottom:.35rem;}
+  .sub{color:var(--muted);font-size:.88rem;margin-bottom:2rem;line-height:1.55;}
+
+  /* Step dots */
+  .dots{display:flex;align-items:center;gap:.4rem;margin-bottom:2rem;}
+  .dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;transition:all .3s;}
+  .dot.idle{background:rgba(0,0,0,.06);color:var(--muted);}
+  .dot.active{background:var(--leaf);color:white;box-shadow:0 4px 12px rgba(45,106,79,.3);}
+  .dot.done{background:var(--sprout);color:white;}
+  .line{flex:1;height:2px;background:rgba(0,0,0,.07);border-radius:2px;transition:background .4s;}
+  .line.done{background:var(--sprout);}
+
+  /* Fields */
+  .field{margin-bottom:1.2rem;}
+  label{display:block;font-size:.74rem;font-weight:700;color:var(--soil);margin-bottom:.45rem;text-transform:uppercase;letter-spacing:.5px;}
+  input{width:100%;padding:.85rem 1rem;border:1.5px solid rgba(0,0,0,.1);border-radius:12px;background:white;font-family:'DM Sans',sans-serif;font-size:.95rem;outline:none;transition:all .2s;color:var(--text);}
+  input:focus{border-color:var(--leaf);box-shadow:0 0 0 3px rgba(45,106,79,.1);}
+
+  /* OTP digits */
+  .otp-row{display:flex;gap:.6rem;}
+  .otp-d{flex:1;text-align:center;font-size:1.7rem;font-weight:900;padding:.8rem 0;border:2px solid rgba(0,0,0,.1);border-radius:12px;background:white;outline:none;transition:all .22s;font-family:'Playfair Display',serif;color:var(--soil);}
+  .otp-d:focus{border-color:var(--leaf);box-shadow:0 0 0 3px rgba(45,106,79,.12);}
+  .otp-d.filled{border-color:var(--sprout);background:var(--sky);}
+  .otp-d.err{border-color:var(--red);background:#FFF5F5;animation:shake .4s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+
+  /* Buttons */
+  .btn{width:100%;padding:.95rem;border:none;border-radius:12px;background:var(--leaf);color:white;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .25s;box-shadow:0 4px 18px rgba(45,106,79,.25);}
+  .btn:hover:not(:disabled){background:#1f4d39;transform:translateY(-2px);box-shadow:0 8px 24px rgba(45,106,79,.35);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+  /* Status cards */
+  .status-card{border-radius:16px;padding:1.3rem;margin-bottom:1.2rem;display:flex;gap:.9rem;align-items:flex-start;}
+  .status-card .sc-icon{font-size:1.6rem;flex-shrink:0;margin-top:1px;}
+  .status-card h4{font-size:.9rem;font-weight:700;margin-bottom:.25rem;}
+  .status-card p{font-size:.8rem;line-height:1.55;}
+  .sc-dev{background:linear-gradient(135deg,#FEF3C7,#FFFBEB);border:1.5px solid #FDE68A;}
+  .sc-dev h4{color:#92400E;} .sc-dev p{color:#92400E;}
+  .sc-otp-val{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:#2C1A0E;letter-spacing:.25em;background:#FEF9C3;border-radius:8px;padding:.25rem .6rem;display:inline-block;margin-top:.3rem;}
+  .sc-email{background:linear-gradient(135deg,var(--sky),#E0F2FE);border:1.5px solid rgba(45,106,79,.2);}
+  .sc-email h4{color:var(--leaf);}  .sc-email p{color:#374151;}
+  .sc-email .addr{font-weight:700;color:var(--soil);}
+
+  /* Error / success */
+  .msg{border-radius:11px;padding:.9rem 1rem;font-size:.85rem;margin-bottom:1rem;display:flex;gap:.6rem;align-items:flex-start;line-height:1.5;}
+  .msg.err{background:#FEE2E2;border:1px solid #FCA5A5;color:var(--red);}
+  .msg.ok{background:#D1FAE5;border:1px solid #6EE7B7;color:#065F46;}
+
+  /* Timer */
+  .timer{text-align:center;font-size:.82rem;color:var(--muted);margin-top:1rem;}
+  .timer a{color:var(--leaf);cursor:pointer;font-weight:600;text-decoration:underline;}
+
+  /* Spinner */
+  .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.35);border-top-color:white;border-radius:50%;animation:sp .7s linear infinite;margin-right:.45rem;vertical-align:middle;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .sec{display:none;}.sec.active{display:block;}
+
+  /* Success */
+  .success{text-align:center;padding:1.5rem 0;}
+  .big-icon{font-size:4rem;animation:pop .5s ease;margin-bottom:1rem;}
+  @keyframes pop{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+  .success h3{font-family:'Playfair Display',serif;font-size:1.9rem;color:var(--soil);margin-bottom:.6rem;}
+  .success p{color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;line-height:1.6;}
+
+  @media(max-width:768px){body{grid-template-columns:1fr;}.left{display:none;}.right{padding:2rem 1.2rem;align-items:flex-start;padding-top:4rem;}}
+</style>
+</head>
+<body>
+
+<div class="left">
+  <span class="deco" style="top:8%;right:3%">🌾</span>
+  <span class="deco" style="bottom:12%;right:8%;font-size:7rem">🌿</span>
+  <div class="panel">
+    <a href="../index.html" class="logo-link">Agriculture<span>Advisoy System</span></a>
+    <h1>Your Farm's<br>Digital Guide</h1>
+    <p>Join farmers across India making smarter, data-backed crop decisions every season — powered by AI and real agricultural data.</p>
+    <div class="panel-stats">
+      <div class="pstat"><div class="v">28+</div><div class="l">States</div></div>
+      <div class="pstat"><div class="v">600+</div><div class="l">Districts</div></div>
+      <div class="pstat"><div class="v">18+</div><div class="l">Crop Types</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="right">
+  <a href="../index.html" class="back">← Home</a>
+  <div class="box">
+
+    <div class="dots">
+      <div class="dot active" id="d1">1</div>
+      <div class="line" id="l1"></div>
+      <div class="dot idle" id="d2">2</div>
+      <div class="line" id="l2"></div>
+      <div class="dot idle" id="d3">✓</div>
+    </div>
+
+    <!-- ── STEP 1 ── -->
+    <div class="sec active" id="s1">
+      <h2>Welcome</h2>
+      <p class="sub">Enter your email to receive a secure one-time password</p>
+      <div class="msg err" id="e1" style="display:none"><span>⚠️</span><span id="e1t"></span></div>
+      <div class="field">
+        <label>Your Name</label>
+        <input type="text" id="nameIn" placeholder="e.g. Ramesh Kumar" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="emailIn" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <button class="btn" id="sendBtn" onclick="sendOTP()">Send OTP →</button>
+      <p style="text-align:center;margin-top:1.2rem;font-size:.8rem;color:var(--muted)">New here? We'll create your account automatically. 🌱</p>
+    </div>
+
+    <!-- ── STEP 2 ── -->
+    <div class="sec" id="s2">
+      <h2>Verify OTP</h2>
+      <p class="sub" id="otpSub">Enter the 6-digit code</p>
+
+      <!-- DEV MODE: OTP on screen -->
+      <div class="status-card sc-dev" id="devCard" style="display:none">
+        <div class="sc-icon">🖥️</div>
+        <div>
+          <h4>Dev Mode — SMTP not configured</h4>
+          <p>GMAIL_USER / GMAIL_APP_PASS not set in .env<br>Your OTP for testing:</p>
+          <div class="sc-otp-val" id="otpShow">------</div>
+        </div>
+      </div>
+
+      <!-- PROD MODE: email sent -->
+      <div class="status-card sc-email" id="emailCard" style="display:none">
+        <div class="sc-icon">📧</div>
+        <div>
+          <h4>OTP sent to your inbox!</h4>
+          <p>Check email at <span class="addr" id="emailDisplay">—</span><br>
+          Not received? Check your spam folder.</p>
+        </div>
+      </div>
+
+      <div class="msg err" id="e2" style="display:none"><span>❌</span><span id="e2t"></span></div>
+
+      <div class="field" style="margin-top:.5rem;">
+        <label>6-Digit OTP</label>
+        <div class="otp-row">
+          <input type="text" inputmode="numeric" class="otp-d" id="o1" maxlength="1" oninput="oi(this,'o2')" onkeydown="bk(event,this,'')">
+          <input type="text" inputmode="numeric" class="otp-d" id="o2" maxlength="1" oninput="oi(this,'o3')" onkeydown="bk(event,this,'o1')">
+          <input type="text" inputmode="numeric" class="otp-d" id="o3" maxlength="1" oninput="oi(this,'o4')" onkeydown="bk(event,this,'o2')">
+          <input type="text" inputmode="numeric" class="otp-d" id="o4" maxlength="1" oninput="oi(this,'o5')" onkeydown="bk(event,this,'o3')">
+          <input type="text" inputmode="numeric" class="otp-d" id="o5" maxlength="1" oninput="oi(this,'o6')" onkeydown="bk(event,this,'o4')">
+          <input type="text" inputmode="numeric" class="otp-d" id="o6" maxlength="1" oninput="oi(this,'')"   onkeydown="bk(event,this,'o5')">
+        </div>
+      </div>
+      <button class="btn" id="verifyBtn" onclick="verifyOTP()">Verify &amp; Login →</button>
+      <div class="timer">
+        <span id="timerTxt">Resend in <strong id="cd">60</strong>s</span>
+        <span id="resendLnk" style="display:none">Didn't get it? <a onclick="resendOTP()">Resend OTP</a></span>
+      </div>
+    </div>
+
+    <!-- ── STEP 3 ── -->
+    <div class="sec" id="s3">
+      <div class="success">
+        <div class="big-icon">🌾</div>
+        <h3>You're In!</h3>
+        <p id="welcomeMsg">Welcome! Redirecting to Crop Advisor…</p>
+        <div class="msg ok"><span>✅</span><span>Login successful. Your session is saved securely.</span></div>
+        <button class="btn" onclick="window.location.href='input.html'">Go to Crop Advisor →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  if (API.isLoggedIn()) window.location.href = 'input.html';
+  let cdTimer, timeLeft = 60;
+
+  async function sendOTP() {
+    const email = document.getElementById('emailIn').value.trim();
+    const name  = document.getElementById('nameIn').value.trim() || 'Farmer';
+    // ✅ Gmail-only validation
+    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+    if (!gmailRegex.test(email)) {
+      return showE('e1', 'Please enter a valid Gmail address (example@gmail.com)');
+    }
+    hideE('e1');
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Sending…';
+    try {
+      const d = await API.sendOTP(email, name);
+      document.getElementById('otpSub').textContent = d.greeting || `OTP ready for ${email}`;
+      document.getElementById('emailDisplay').textContent = email;
+
+      if (d.dev_mode && d.otp) {
+        document.getElementById('otpShow').textContent = d.otp;
+        document.getElementById('devCard').style.display  = 'flex';
+        document.getElementById('emailCard').style.display = 'none';
+      } else {
+        document.getElementById('devCard').style.display   = 'none';
+        document.getElementById('emailCard').style.display = 'flex';
+      }
+
+      step(2);
+      startCD();
+      setTimeout(() => document.getElementById('o1').focus(), 100);
+    } catch(err) {
+      showE('e1', err.message || 'Cannot connect to server. Is backend running on port 8000?');
+    } finally { btn.disabled = false; btn.innerHTML = 'Send OTP →'; }
+  }
+
+  async function verifyOTP() {
+    const email = document.getElementById('emailIn').value.trim();
+    const otp   = ['o1','o2','o3','o4','o5','o6'].map(id => document.getElementById(id).value).join('');
+    if (otp.length < 6) return showE('e2','Please enter all 6 digits.');
+    hideE('e2');
+    const btn = document.getElementById('verifyBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Verifying…';
+    try {
+      const d = await API.verifyOTP(email, otp);
+      document.getElementById('welcomeMsg').textContent = `Welcome, ${d.user?.name || 'Farmer'}! Heading to Crop Advisor…`;
+      clearInterval(cdTimer);
+      step(3);
+      setTimeout(() => window.location.href = 'input.html', 2000);
+    } catch(err) {
+      showE('e2', err.message || 'Incorrect OTP. Try again.');
+      ['o1','o2','o3','o4','o5','o6'].forEach(id => document.getElementById(id).classList.add('err'));
+      setTimeout(() => {
+        ['o1','o2','o3','o4','o5','o6'].forEach(id => {
+          const el = document.getElementById(id);
+          el.classList.remove('err','filled'); el.value = '';
+        });
+        document.getElementById('o1').focus();
+      }, 1200);
+    } finally { btn.disabled = false; btn.innerHTML = 'Verify &amp; Login →'; }
+  }
+
+  async function resendOTP() {
+    document.getElementById('resendLnk').style.display = 'none';
+    document.getElementById('timerTxt').style.display = 'inline';
+    try {
+      const d = await API.sendOTP(
+        document.getElementById('emailIn').value.trim(),
+        document.getElementById('nameIn').value.trim() || 'Farmer'
+      );
+      if (d.dev_mode && d.otp) document.getElementById('otpShow').textContent = d.otp;
+      startCD();
+    } catch {}
+  }
+
+  function startCD() {
+    timeLeft = 60; document.getElementById('cd').textContent = 60;
+    document.getElementById('timerTxt').style.display  = 'inline';
+    document.getElementById('resendLnk').style.display = 'none';
+    cdTimer = setInterval(() => {
+      timeLeft--;
+      document.getElementById('cd').textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(cdTimer);
+        document.getElementById('timerTxt').style.display  = 'none';
+        document.getElementById('resendLnk').style.display = 'inline';
+      }
+    }, 1000);
+  }
+
+  function oi(el, nxt) {
+    el.value = el.value.replace(/\D/g,'').slice(-1);
+    el.classList.toggle('filled', !!el.value);
+    if (el.value && nxt) document.getElementById(nxt)?.focus();
+    // Auto-submit
+    const all = ['o1','o2','o3','o4','o5','o6'].map(id => document.getElementById(id).value).join('');
+    if (all.length === 6) setTimeout(verifyOTP, 350);
+  }
+  function bk(e, el, prv) { if (e.key==='Backspace' && !el.value && prv) document.getElementById(prv)?.focus(); }
+
+  function step(n) {
+    document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+    document.getElementById('s'+n).classList.add('active');
+    [1,2,3].forEach(i => {
+      const d = document.getElementById('d'+i);
+      if (i < n)       { d.className = 'dot done'; d.textContent = '✓'; }
+      else if (i === n){ d.className = 'dot active'; d.textContent = i; }
+      else             { d.className = 'dot idle'; d.textContent = i; }
+    });
+    [1,2].forEach(i => document.getElementById('l'+i).className = 'line'+(i < n?' done':''));
+  }
+
+  function showE(id, msg) { document.getElementById(id+'t').textContent=msg; document.getElementById(id).style.display='flex'; }
+  function hideE(id)       { document.getElementById(id).style.display='none'; }
+  document.addEventListener('keydown', e => { if (e.key==='Enter' && document.getElementById('s1').classList.contains('active')) sendOTP(); });
+</script>
+</body>
+</html>

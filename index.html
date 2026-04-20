@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>  Agriculture Advisory System</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{--soil:#2C1A0E;--leaf:#2D6A4F;--sprout:#52B788;--harvest:#D4A017;--sky:#E8F5E9;--cream:#FFF8F0;--text:#1A1A1A;--muted:#6B7280;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);overflow-x:hidden;}
+
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 4rem;background:rgba(255,248,240,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(45,106,79,.1);}
+  .logo{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:900;color:var(--leaf);letter-spacing:-.5px;text-decoration:none;}
+  .logo span{color:var(--harvest);}
+  nav ul{list-style:none;display:flex;gap:2.5rem;align-items:center;}
+  nav ul a{text-decoration:none;color:var(--muted);font-size:.9rem;font-weight:500;transition:color .2s;}
+  nav ul a:hover{color:var(--leaf);}
+  .nav-cta{background:var(--leaf)!important;color:white!important;padding:.6rem 1.5rem;border-radius:100px;transition:all .2s!important;}
+  .nav-cta:hover{background:#1f4d39!important;transform:translateY(-1px);}
+
+  /* HERO */
+  .hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:7rem 4rem 4rem;gap:5rem;position:relative;overflow:hidden;}
+  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 80% 50%,rgba(82,183,136,.1) 0%,transparent 70%),radial-gradient(ellipse 40% 60% at 10% 80%,rgba(212,160,23,.07) 0%,transparent 60%);pointer-events:none;}
+  /* Decorative circles */
+  .hero::after{content:'🌿';position:absolute;top:15%;right:2%;font-size:8rem;opacity:.06;transform:rotate(20deg);}
+
+  .badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(45,106,79,.1);border:1px solid rgba(45,106,79,.2);color:var(--leaf);padding:.35rem 1rem;border-radius:100px;font-size:.8rem;font-weight:500;margin-bottom:1.5rem;}
+  .pulse{width:8px;height:8px;background:var(--sprout);border-radius:50%;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
+
+  h1{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,5vw,4.8rem);line-height:1.08;font-weight:900;color:var(--soil);margin-bottom:1.5rem;}
+  h1 em{font-style:normal;color:var(--leaf);position:relative;display:inline-block;}
+  h1 em::after{content:'';position:absolute;bottom:2px;left:0;right:0;height:5px;background:var(--harvest);border-radius:3px;opacity:.7;}
+
+  .hero-sub{font-size:1.1rem;line-height:1.8;color:var(--muted);max-width:480px;margin-bottom:2.5rem;}
+
+  .hero-btns{display:flex;gap:1rem;flex-wrap:wrap;}
+  .btn-primary{display:inline-flex;align-items:center;gap:.5rem;background:var(--leaf);color:white;padding:.9rem 2.2rem;border-radius:100px;text-decoration:none;font-weight:600;font-size:.95rem;transition:all .3s;box-shadow:0 4px 24px rgba(45,106,79,.35);}
+  .btn-primary:hover{background:#1f4d39;transform:translateY(-3px);box-shadow:0 8px 32px rgba(45,106,79,.45);}
+  .btn-secondary{display:inline-flex;align-items:center;gap:.5rem;background:transparent;color:var(--leaf);padding:.9rem 2.2rem;border-radius:100px;border:2px solid var(--leaf);text-decoration:none;font-weight:600;font-size:.95rem;transition:all .3s;}
+  .btn-secondary:hover{background:var(--leaf);color:white;transform:translateY(-3px);}
+
+  /* HERO CARD */
+  .hero-visual{position:relative;display:flex;justify-content:center;align-items:center;}
+  .hero-card{background:white;border-radius:28px;padding:2.2rem;box-shadow:0 24px 72px rgba(0,0,0,.12);width:100%;max-width:380px;animation:float 5s ease-in-out infinite;position:relative;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+  .card-head{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1.2rem;border-bottom:1px solid var(--sky);}
+  .card-ico{width:50px;height:50px;background:linear-gradient(135deg,var(--sky),rgba(82,183,136,.3));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;}
+  .card-head h3{font-size:1rem;font-weight:700;color:var(--soil);}
+  .card-head p{font-size:.8rem;color:var(--muted);margin-top:2px;}
+  .stat-row{display:flex;justify-content:space-between;margin-bottom:1.2rem;gap:.6rem;}
+  .stat{background:var(--sky);border-radius:14px;padding:.9rem 1rem;flex:1;text-align:center;}
+  .stat .v{font-size:1.5rem;font-weight:800;color:var(--leaf);font-family:'Playfair Display',serif;}
+  .stat .l{font-size:.68rem;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;}
+  .pbar{background:var(--sky);border-radius:100px;height:10px;overflow:hidden;margin-top:.8rem;}
+  .pfill{height:100%;background:linear-gradient(90deg,var(--sprout),var(--harvest));border-radius:100px;width:78%;animation:grow 2.5s ease-out;}
+  @keyframes grow{from{width:0}}
+  .plbl{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-top:.5rem;}
+  .plbl strong{color:var(--leaf);}
+
+  /* Floating chips */
+  .chip-float{position:absolute;background:white;border-radius:100px;padding:.55rem 1.1rem;box-shadow:0 8px 28px rgba(0,0,0,.14);font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:.4rem;white-space:nowrap;}
+  .chip-float.top{top:-18px;right:-20px;color:#065F46;}
+  .chip-float.bottom{bottom:-10px;left:-24px;color:var(--harvest);}
+
+  /* FEATURES */
+  .features{padding:7rem 4rem;background:white;}
+  .sec-label{text-align:center;color:var(--sprout);font-size:.8rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:.8rem;}
+  .sec-title{text-align:center;font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:700;color:var(--soil);margin-bottom:.8rem;}
+  .sec-sub{text-align:center;color:var(--muted);font-size:1rem;margin-bottom:4rem;}
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.8rem;max-width:1020px;margin:0 auto;}
+  .fcard{padding:2.2rem;border-radius:22px;border:1.5px solid rgba(45,106,79,.09);transition:all .3s;cursor:default;position:relative;overflow:hidden;}
+  .fcard::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--leaf),var(--harvest));transform:scaleX(0);transform-origin:left;transition:transform .35s;}
+  .fcard:hover{transform:translateY(-5px);box-shadow:0 16px 48px rgba(0,0,0,.08);border-color:rgba(45,106,79,.18);}
+  .fcard:hover::before{transform:scaleX(1);}
+  .fcard .fi{font-size:2.4rem;margin-bottom:1.2rem;display:block;}
+  .fcard h3{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--soil);margin-bottom:.6rem;}
+  .fcard p{color:var(--muted);font-size:.88rem;line-height:1.7;}
+
+  /* HOW IT WORKS */
+  .how{padding:7rem 4rem;background:linear-gradient(180deg,var(--sky) 0%,rgba(232,245,233,0) 100%);}
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;max-width:1020px;margin:0 auto;position:relative;}
+  .steps::before{content:'';position:absolute;top:28px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,var(--leaf),var(--harvest));opacity:.2;z-index:0;}
+  .step{text-align:center;position:relative;z-index:1;}
+  .snum{width:58px;height:58px;background:var(--leaf);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;margin:0 auto 1.2rem;box-shadow:0 6px 20px rgba(45,106,79,.35);}
+  .step h4{font-weight:700;color:var(--soil);margin-bottom:.5rem;font-size:1rem;}
+  .step p{font-size:.84rem;color:var(--muted);line-height:1.65;}
+
+  /* STATS BAND */
+  .stats-band{background:var(--soil);padding:4rem;display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;}
+  .sstat{text-align:center;}
+  .sstat .sv{font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:900;color:var(--sprout);}
+  .sstat .sl{font-size:.85rem;color:rgba(255,255,255,.5);margin-top:.3rem;}
+
+  /* FOOTER */
+  footer{background:var(--soil);border-top:1px solid rgba(255,255,255,.06);padding:2.5rem 4rem;display:flex;align-items:center;justify-content:space-between;}
+  .ft-logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:900;color:white;}
+  .ft-logo span{color:var(--harvest);}
+  footer p{color:rgba(255,255,255,.4);font-size:.85rem;}
+  .ft-links{display:flex;gap:1.5rem;}
+  .ft-links a{color:rgba(255,255,255,.4);text-decoration:none;font-size:.85rem;transition:color .2s;}
+  .ft-links a:hover{color:var(--sprout);}
+
+  @media(max-width:900px){
+    nav{padding:1rem 1.5rem;}
+    nav ul{gap:1.2rem;}
+    .hero{grid-template-columns:1fr;padding:5.5rem 1.5rem 3rem;gap:2rem;}
+    .hero-visual{display:none;}
+    .features,.how{padding:4rem 1.5rem;}
+    .feat-grid{grid-template-columns:1fr;}
+    .steps{grid-template-columns:1fr 1fr;gap:2rem;}
+    .steps::before{display:none;}
+    .stats-band{grid-template-columns:1fr 1fr;padding:3rem 2rem;}
+    footer{flex-direction:column;gap:1rem;padding:2rem;text-align:center;}
+    .ft-links{justify-content:center;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Agriculture<span>Advisory System</span></a>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="pages/reference.html">Crop Database</a></li>
+    <li><a href="pages/contact.html">Contact</a></li>
+    <li><a href="pages/login.html" class="nav-cta" id="navAuthLink">Login →</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div>
+    <div class="badge"><div class="pulse"></div>AI-Powered for Indian Farmers</div>
+    <h1>Smart Advice for<br><em>Every Crop</em>,<br>Every Season</h1>
+    <p class="hero-sub">Agriculture Advisory System uses machine learning and real agricultural data to help farmers across India decide which crops will thrive in their region — saving time, money, and resources.</p>
+    <div class="hero-btns">
+      <a href="pages/login.html" class="btn-primary" id="heroBtn">🚀 Get Started Free</a>
+      <a href="pages/reference.html" class="btn-secondary">📚 Browse Crops</a>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div style="position:relative;">
+      
+      <div class="hero-card">
+        <div class="card-head">
+          <div class="card-ico">🌾</div>
+          <div>
+            <h3>Crop Analysis</h3>
+            <p>Maharashtra · Wheat · Rabi</p>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><div class="v">78</div><div class="l">Score</div></div>
+          <div class="stat"><div class="v">Good</div><div class="l">Rating</div></div>
+          <div class="stat"><div class="v">Rabi</div><div class="l">Season</div></div>
+        </div>
+        <div class="pbar"><div class="pfill"></div></div>
+        <div class="plbl"><span>Suitability Score</span><strong>78/100</strong></div>
+      </div>
+      <div class="chip-float bottom">🌿 3 Alternatives Found</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <p class="sec-label">What We Offer</p>
+  <h2 class="sec-title">Built for India's Diverse Agriculture</h2>
+  <p class="sec-sub">Covering 28+ states with real climatic and soil data</p>
+  <div class="feat-grid">
+    <div class="fcard"><span class="fi">🗺️</span><h3>State-by-State Intelligence</h3><p>Click any state on our interactive India map and get hyper-local agricultural recommendations based on real soil, climate, and historical data.</p></div>
+    <div class="fcard"><span class="fi">🤖</span><h3>ML Crop Scoring</h3><p>Our scoring engine analyses rainfall, temperature, soil, and season fit to give a precise 0–100 suitability score with full factor breakdown.</p></div>
+    <div class="fcard"><span class="fi">📊</span><h3>Detailed AI Report</h3><p>Claude AI generates a full advisory report — cultivation guide, risk factors, pest management, and current market prices / MSP rates.</p></div>
+    <div class="fcard"><span class="fi">🌿</span><h3>Alternative Crops</h3><p>If your chosen crop isn't ideal, we suggest the top alternatives that thrive in your specific state, ranked by suitability score.</p></div>
+    <div class="fcard"><span class="fi">🔐</span><h3>Secure OTP Login</h3><p>Email-based one-time password authentication. No passwords to remember — just enter your email and verify with a 6-digit code.</p></div>
+    <div class="fcard"><span class="fi">📱</span><h3>Mobile Friendly</h3><p>Access KrishiMitra from any device — smartphone, tablet, or desktop — right from your field or home, with a clean responsive interface.</p></div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <p class="sec-label">How It Works</p>
+  <h2 class="sec-title">Four Simple Steps</h2>
+  <p class="sec-sub" style="margin-bottom:3rem;">From login to full crop advisory in under a minute</p>
+  <div class="steps">
+    <div class="step">
+      <div class="snum">1</div>
+      <h4>Login with OTP</h4>
+      <p>Enter your email — receive a 6-digit OTP and verify securely. No passwords needed.</p>
+    </div>
+    <div class="step">
+      <div class="snum">2</div>
+      <h4>Select Your State</h4>
+      <p>Click your state on the interactive India map. State data loads automatically.</p>
+    </div>
+    <div class="step">
+      <div class="snum">3</div>
+      <h4>Enter Your Crop</h4>
+      <p>Type the crop name or pick from quick-select chips. Choose your planting season.</p>
+    </div>
+    <div class="step">
+      <div class="snum">4</div>
+      <h4>Get AI Advisory</h4>
+      <p>Receive a full report: score, reasoning, cultivation guide, risks, and market outlook.</p>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-band">
+  <div class="sstat"><div class="sv">28+</div><div class="sl">States Covered</div></div>
+  <div class="sstat"><div class="sv">15+</div><div class="sl">Crop Types</div></div>
+  <div class="sstat"><div class="sv">4</div><div class="sl">Analysis Factors</div></div>
+  <div class="sstat"><div class="sv">10s</div><div class="sl">Analysis Time</div></div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-logo">Krishi<span>Mitra</span></div>
+  <p>© 2025 KrishiMitra · Built for Indian Farmers 🇮🇳</p>
+  <div class="ft-links">
+    <a href="pages/reference.html">Crop Database</a>
+    <a href="pages/contact.html">Contact</a>
+    <a href="pages/login.html">Login</a>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+  if (API.isLoggedIn()) {
+    document.getElementById('navAuthLink').textContent = 'Go to Advisor →';
+    document.getElementById('navAuthLink').href = 'pages/input.html';
+    document.getElementById('heroBtn').textContent = '🌾 Go to Advisor';
+    document.getElementById('heroBtn').href = 'pages/input.html';
+  }
+</script>
+</body>
+</html>

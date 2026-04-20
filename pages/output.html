@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analysis Result</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--soil:#2C1A0E;--leaf:#2D6A4F;--sprout:#52B788;--harvest:#D4A017;--sky:#E8F5E9;--cream:#FFF8F0;--text:#1A1A1A;--muted:#6B7280;--red:#DC2626;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);}
+
+  nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 3rem;background:white;border-bottom:1px solid rgba(45,106,79,.1);position:sticky;top:0;z-index:100;}
+  .logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:var(--leaf);text-decoration:none;}
+  .logo span{color:var(--harvest);}
+  .nav-back{display:flex;align-items:center;gap:.5rem;color:var(--muted);text-decoration:none;font-size:.88rem;transition:color .2s;padding:.4rem .8rem;border-radius:100px;border:1px solid rgba(0,0,0,.1);}
+  .nav-back:hover{color:var(--leaf);border-color:rgba(45,106,79,.3);background:var(--sky);}
+  .nav-right{display:flex;gap:.7rem;}
+  .nav-link{color:var(--muted);text-decoration:none;font-size:.85rem;padding:.4rem .8rem;border-radius:100px;border:1px solid rgba(0,0,0,.08);transition:all .2s;}
+  .nav-link:hover{color:var(--leaf);border-color:rgba(45,106,79,.25);background:var(--sky);}
+
+  .page-wrap{max-width:980px;margin:0 auto;padding:2.5rem 2rem 4rem;}
+
+  /* LOADING */
+  .loading{text-align:center;padding:6rem 2rem;}
+  .ring{width:68px;height:68px;border:4px solid var(--sky);border-top-color:var(--leaf);border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 1.8rem;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .loading h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--soil);margin-bottom:.5rem;}
+  .loading p{color:var(--muted);margin-bottom:2rem;}
+  .load-steps{display:flex;flex-direction:column;gap:.6rem;max-width:360px;margin:0 auto;}
+  .ls{display:flex;align-items:center;gap:.8rem;background:white;border-radius:11px;padding:.7rem 1.2rem;font-size:.85rem;color:var(--muted);border:1px solid rgba(0,0,0,.06);transition:all .3s;}
+  .ls.active{color:var(--leaf);background:var(--sky);border-color:rgba(45,106,79,.2);font-weight:500;}
+  .ls.done{color:#065F46;background:#D1FAE5;border-color:#A7F3D0;}
+  .ls.done .ls-icon::after{content:'✓';}
+
+  /* RESULTS */
+  .results{display:none;}
+  .results.show{display:block;}
+
+  /* HERO */
+  .result-hero{background:white;border-radius:24px;padding:2.5rem;margin-bottom:1.5rem;box-shadow:0 4px 24px rgba(0,0,0,.06);display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:center;border:1px solid rgba(45,106,79,.07);}
+  .res-tag{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:.7rem;}
+  .res-title{font-family:'Playfair Display',serif;font-size:2.3rem;color:var(--soil);margin-bottom:.5rem;line-height:1.2;}
+  .meta-row{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem;}
+  .mpill{background:var(--sky);border-radius:100px;padding:.3rem .9rem;font-size:.8rem;color:var(--leaf);font-weight:500;}
+
+  /* SCORE RING */
+  .score-wrap{width:145px;height:145px;position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .score-wrap svg{position:absolute;inset:0;transform:rotate(-90deg);}
+  .score-inner{position:relative;z-index:1;text-align:center;}
+  .score-val{font-family:'Playfair Display',serif;font-size:2.3rem;font-weight:900;line-height:1;}
+  .score-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+  .score-rating{font-size:.75rem;font-weight:700;margin-top:4px;}
+  .sc-high .score-val{color:#065F46;} .sc-high .score-rating{color:#065F46;}
+  .sc-med  .score-val{color:#92400E;} .sc-med  .score-rating{color:#B45309;}
+  .sc-low  .score-val{color:var(--red);} .sc-low  .score-rating{color:var(--red);}
+
+  /* VERDICT */
+  .verdict{border-radius:18px;padding:1.5rem 1.8rem;margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:1.2rem;line-height:1.7;}
+  .vicon{font-size:2rem;flex-shrink:0;margin-top:2px;}
+  .verdict h4{font-weight:700;font-size:1.05rem;margin-bottom:.3rem;}
+  .verdict p{font-size:.9rem;}
+  .v-high{background:#D1FAE5;border:1.5px solid #A7F3D0;color:#065F46;}
+  .v-med {background:#FEF3C7;border:1.5px solid #FDE68A;color:#92400E;}
+  .v-low {background:#FEE2E2;border:1.5px solid #FCA5A5;color:var(--red);}
+
+  /* INFO CARDS */
+  .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-bottom:1.5rem;}
+  .icard{background:white;border-radius:18px;padding:1.5rem;border:1px solid rgba(0,0,0,.06);transition:all .25s;cursor:default;}
+  .icard:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.09);}
+  .icard-icon{font-size:1.7rem;margin-bottom:.7rem;display:block;}
+  .icard h4{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:.4rem;}
+  .icard p{font-size:.9rem;color:var(--soil);line-height:1.55;}
+
+  /* FACTOR BREAKDOWN */
+  .factors{background:white;border-radius:20px;padding:2rem;margin-bottom:1.5rem;border:1px solid rgba(0,0,0,.06);}
+  .sec-title{font-family:'Playfair Display',serif;font-size:1.35rem;color:var(--soil);margin-bottom:1.3rem;}
+  .factor-bar{margin-bottom:1rem;}
+  .factor-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;}
+  .factor-name{font-size:.85rem;font-weight:600;color:var(--soil);}
+  .factor-score{font-size:.82rem;font-weight:700;color:var(--leaf);}
+  .fbar-bg{background:var(--sky);border-radius:100px;height:8px;overflow:hidden;}
+  .fbar-fill{height:100%;border-radius:100px;transition:width 1.2s ease;}
+  .factor-note{font-size:.78rem;color:var(--muted);margin-top:.3rem;}
+
+  /* ALTERNATIVES */
+  .alts{background:white;border-radius:20px;padding:2rem;margin-bottom:1.5rem;border:1px solid rgba(0,0,0,.06);}
+  .alt-list{display:flex;flex-direction:column;gap:.8rem;}
+  .alt-item{display:flex;align-items:center;justify-content:space-between;background:var(--cream);border:1.5px solid rgba(45,106,79,.08);border-radius:14px;padding:1rem 1.3rem;transition:all .22s;}
+  .alt-item:hover{background:var(--sky);border-color:rgba(45,106,79,.25);transform:translateX(4px);}
+  .alt-left{display:flex;align-items:center;gap:1rem;}
+  .alt-emoji{font-size:1.9rem;}
+  .alt-info h5{font-size:.95rem;font-weight:700;color:var(--soil);}
+  .alt-info p{font-size:.8rem;color:var(--muted);margin-top:2px;}
+  .alt-badge{background:var(--sky);border-radius:100px;padding:.3rem .9rem;font-size:.82rem;font-weight:800;color:var(--leaf);}
+
+  /* REPORT */
+  .report{background:white;border-radius:20px;padding:2rem;margin-bottom:2rem;border:1px solid rgba(0,0,0,.06);}
+  .report-text{color:var(--muted);font-size:.9rem;line-height:1.85;white-space:pre-wrap;}
+
+  /* ACTIONS */
+  .actions{display:flex;gap:1rem;flex-wrap:wrap;}
+  .btn{padding:.9rem 1.8rem;border:none;border-radius:13px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .25s;text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;}
+  .btn-g{background:var(--leaf);color:white;box-shadow:0 4px 20px rgba(45,106,79,.28);}
+  .btn-g:hover{background:#1f4d39;transform:translateY(-2px);}
+  .btn-o{background:transparent;color:var(--leaf);border:2px solid var(--leaf);}
+  .btn-o:hover{background:var(--sky);}
+
+  @media(max-width:700px){
+    nav{padding:1rem 1.5rem;}
+    .page-wrap{padding:1.5rem 1rem 3rem;}
+    .result-hero{grid-template-columns:1fr;}
+    .score-wrap{margin:0 auto;}
+    .cards-grid{grid-template-columns:1fr;}
+  }
+
+  @media print{
+    nav,.actions{display:none;}
+    .page-wrap{padding:1rem;}
+    .loading{display:none;}
+    .results{display:block!important;}
+    .icard:hover,.alt-item:hover{transform:none;}
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a href="../index.html" class="logo">Agriculture<span>Advisory System</span></a>
+  <div class="nav-right">
+    <a href="input.html" class="nav-back">← New Analysis</a>
+    <a href="reference.html" class="nav-link">📚 Crop DB</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- LOADING -->
+  <div class="loading" id="loadDiv">
+    <div class="ring"></div>
+    <h2 id="loadTitle">Running AI Analysis</h2>
+    <p>Calculating suitability and generating advisory…</p>
+    <div class="load-steps">
+      <div class="ls" id="ls1"><span class="ls-icon">🌍 </span>Fetching state data</div>
+      <div class="ls" id="ls2"><span class="ls-icon">📊 </span>Scoring crop factors</div>
+      <div class="ls" id="ls3"><span class="ls-icon">🌿 </span>Finding alternatives</div>
+      <div class="ls" id="ls4"><span class="ls-icon">📝 </span>Writing AI advisory</div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results" id="resultsDiv">
+
+    <!-- Hero -->
+    <div class="result-hero">
+      <div>
+        <div class="res-tag">Crop Suitability Analysis</div>
+        <div class="res-title" id="rTitle">—</div>
+        <div class="meta-row">
+          <span class="mpill" id="pState">📍 —</span>
+          <span class="mpill" id="pSeason">📅 —</span>
+          <span class="mpill" id="pRating">⭐ —</span>
+        </div>
+      </div>
+      <div class="score-wrap" id="scoreWrap">
+        <svg width="145" height="145" viewBox="0 0 145 145">
+          <circle cx="72.5" cy="72.5" r="62" fill="none" stroke="#E8F5E9" stroke-width="10"/>
+          <circle id="scoreArc" cx="72.5" cy="72.5" r="62" fill="none" stroke="#2D6A4F"
+            stroke-width="10" stroke-dasharray="390" stroke-dashoffset="390" stroke-linecap="round"/>
+        </svg>
+        <div class="score-inner">
+          <div class="score-val" id="sVal">—</div>
+          <div class="score-lbl">Score</div>
+          <div class="score-rating" id="sRating">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verdict -->
+    <div class="verdict" id="verdictDiv">
+      <div class="vicon" id="vIcon">ℹ️</div>
+      <div>
+        <h4 id="vTitle">—</h4>
+        <p id="vText">—</p>
+      </div>
+    </div>
+
+    <!-- Info cards -->
+    <div class="cards-grid">
+      <div class="icard"><span class="icard-icon">🌧️</span><h4>Rainfall</h4><p id="cRain">—</p></div>
+      <div class="icard"><span class="icard-icon">🌡️</span><h4>Temperature</h4><p id="cTemp">—</p></div>
+      <div class="icard"><span class="icard-icon">🪨</span><h4>Soil Type</h4><p id="cSoil">—</p></div>
+      <div class="icard"><span class="icard-icon">📅</span><h4>Best Season</h4><p id="cSeason">—</p></div>
+      <div class="icard"><span class="icard-icon">📈</span><h4>Yield Estimate</h4><p id="cYield">—</p></div>
+      <div class="icard"><span class="icard-icon">💰</span><h4>Market / MSP</h4><p id="cMarket">—</p></div>
+    </div>
+
+    <!-- Factor breakdown -->
+    <div class="factors" id="factorsDiv">
+      <h3 class="sec-title">📊 Factor Breakdown</h3>
+      <div id="factorList"></div>
+    </div>
+
+    <!-- Alternatives -->
+    <div class="alts">
+      <h3 class="sec-title">🌿 Alternative Crop Suggestions</h3>
+      <div class="alt-list" id="altList">
+        <p style="color:var(--muted);font-size:.88rem;">No alternatives found.</p>
+      </div>
+    </div>
+
+    <!-- Detailed Report -->
+    <div class="report">
+      <h3 class="sec-title">📋 Detailed Advisory Report</h3>
+      <div class="report-text" id="rptText">—</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <a href="input.html" class="btn btn-g">🔄 Analyse Another Crop</a>
+      <button class="btn btn-o" onclick="window.print()">🖨️ Print Report</button>
+    </div>
+
+  </div><!-- /.results -->
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  API.requireAuth();
+
+  // ── Loading animation ─────────────────────────────────────
+  const lsIds = ['ls1','ls2','ls3','ls4'];
+  let lsIdx = 0;
+  const lsTimer = setInterval(() => {
+    if (lsIdx > 0) {
+      document.getElementById(lsIds[lsIdx-1]).classList.remove('active');
+      document.getElementById(lsIds[lsIdx-1]).classList.add('done');
+    }
+    if (lsIdx < lsIds.length) {
+      document.getElementById(lsIds[lsIdx]).classList.add('active');
+      lsIdx++;
+    } else { clearInterval(lsTimer); }
+  }, 900);
+
+  // ── Load result ───────────────────────────────────────────
+  async function loadResult() {
+    const cached = sessionStorage.getItem('km_result');
+    if (cached) {
+      await wait(3600);
+      clearInterval(lsTimer);
+      lsIds.forEach(id => {
+        document.getElementById(id).classList.remove('active');
+        document.getElementById(id).classList.add('done');
+      });
+      render(JSON.parse(cached));
+      return;
+    }
+
+    const aid = sessionStorage.getItem('km_analysis_id');
+    if (aid) {
+      document.getElementById('loadTitle').textContent = 'Loading Saved Analysis';
+      try {
+        const d = await API.getAnalysis(aid);
+        clearInterval(lsTimer);
+        render(d.data.result);
+        // Restore query from saved data
+        if (!sessionStorage.getItem('km_query') && d.data) {
+          sessionStorage.setItem('km_query', JSON.stringify({
+            location: d.data.location || '—',
+            crop: d.data.crop || '—',
+            season: d.data.season || ''
+          }));
+        }
+        return;
+      } catch(e) { console.error(e); }
+    }
+
+    alert('No analysis data found. Please run a new analysis.');
+    window.location.href = 'input.html';
+  }
+
+  function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ── Render result ─────────────────────────────────────────
+  function render(data) {
+    const query = JSON.parse(sessionStorage.getItem('km_query') || '{}');
+    const { location='—', crop='—', season='' } = query;
+    const score = data.suitability_score ?? 0;
+
+    document.getElementById('loadDiv').style.display = 'none';
+    document.getElementById('resultsDiv').classList.add('show');
+
+    // Hero
+    const emoji = data.crop_emoji || '🌱';
+    document.getElementById('rTitle').textContent  = `${emoji} ${crop} in ${location}`;
+    document.getElementById('pState').textContent  = `📍 ${location}`;
+    document.getElementById('pSeason').textContent = `📅 ${season || 'General'}`;
+    document.getElementById('pRating').textContent = `⭐ ${data.rating || '—'}`;
+
+    // Score ring
+    const sw = document.getElementById('scoreWrap');
+    const cls = score >= 70 ? 'sc-high' : score >= 45 ? 'sc-med' : 'sc-low';
+    sw.classList.add(cls);
+    document.getElementById('sVal').textContent    = score;
+    document.getElementById('sRating').textContent = data.rating || '—';
+    const arcColor = score >= 70 ? '#2D6A4F' : score >= 45 ? '#D97706' : '#DC2626';
+    document.getElementById('scoreArc').style.stroke = arcColor;
+    setTimeout(() => {
+      const arc = document.getElementById('scoreArc');
+      arc.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)';
+      arc.style.strokeDashoffset = 390 - (score / 100) * 390;
+    }, 150);
+
+    // Verdict
+    const vd = document.getElementById('verdictDiv');
+    vd.className = 'verdict ' + (score>=70?'v-high':score>=45?'v-med':'v-low');
+    document.getElementById('vIcon').textContent  = score>=70?'✅':score>=45?'⚠️':'❌';
+    document.getElementById('vTitle').textContent = data.verdict_title || '';
+    document.getElementById('vText').textContent  = data.verdict_text  || '';
+
+    // Info cards
+    document.getElementById('cRain').textContent   = data.rainfall        || '—';
+    document.getElementById('cTemp').textContent   = data.temperature     || '—';
+    document.getElementById('cSoil').textContent   = data.soil            || '—';
+    document.getElementById('cSeason').textContent = data.best_season     || '—';
+    document.getElementById('cYield').textContent  = data.yield_estimate  || '—';
+    document.getElementById('cMarket').textContent = data.market_potential || '—';
+
+    // Factor breakdown
+    const factors = data.factor_scores || {};
+    const fl = document.getElementById('factorList');
+    if (Object.keys(factors).length > 0) {
+      fl.innerHTML = '';
+      const colors = {rainfall:'#2D6A4F', temperature:'#D4A017', soil:'#52B788', season:'#3B82F6'};
+      Object.entries(factors).forEach(([k, v]) => {
+        const pct = Math.round((v.score / v.max) * 100);
+        const color = colors[k] || '#52B788';
+        fl.innerHTML += `
+          <div class="factor-bar">
+            <div class="factor-head">
+              <span class="factor-name">${k.charAt(0).toUpperCase()+k.slice(1)}</span>
+              <span class="factor-score">${v.score}/${v.max} (${pct}%)</span>
+            </div>
+            <div class="fbar-bg">
+              <div class="fbar-fill" style="width:0%;background:${color}" data-pct="${pct}%"></div>
+            </div>
+            <div class="factor-note">${v.note}</div>
+          </div>`;
+      });
+      setTimeout(() => {
+        document.querySelectorAll('.fbar-fill').forEach(el => {
+          el.style.width = el.dataset.pct;
+        });
+      }, 200);
+    } else {
+      document.getElementById('factorsDiv').style.display = 'none';
+    }
+
+    // Alternatives
+    const al = document.getElementById('altList');
+    const alts = data.alternatives || [];
+    if (alts.length > 0) {
+      al.innerHTML = '';
+      alts.forEach(a => {
+        al.innerHTML += `
+          <div class="alt-item">
+            <div class="alt-left">
+              <div class="alt-emoji">${a.icon || '🌿'}</div>
+              <div class="alt-info">
+                <h5>${a.name}</h5>
+                <p>${a.reason}</p>
+              </div>
+            </div>
+            <div class="alt-badge">${a.score}</div>
+          </div>`;
+      });
+    }
+
+    // Advisory report
+    document.getElementById('rptText').textContent = data.detailed_advisory || '—';
+
+    // Clean up session (so revisit fetches fresh)
+    sessionStorage.removeItem('km_result');
+  }
+
+  loadResult();
+</script>
+</body>
+</html>

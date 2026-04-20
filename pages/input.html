@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crop Advisor – Agriculture Advisory</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{--soil:#2C1A0E;--leaf:#2D6A4F;--sprout:#52B788;--harvest:#D4A017;--sky:#E8F5E9;--cream:#FFF8F0;--text:#1A1A1A;--muted:#6B7280;--red:#DC2626;--sidebar:400px;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.8rem;background:white;border-bottom:1px solid rgba(45,106,79,.1);flex-shrink:0;}
+  .logo{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:900;color:var(--leaf);text-decoration:none;}
+  .logo span{color:var(--harvest);}
+  .nav-right{display:flex;align-items:center;gap:.6rem;}
+  .user-pill{background:var(--sky);border:1px solid rgba(45,106,79,.2);border-radius:100px;padding:.35rem .9rem;font-size:.8rem;color:var(--leaf);font-weight:600;}
+  .nav-btn{border:1px solid rgba(45,106,79,.25);border-radius:100px;padding:.35rem .9rem;font-size:.8rem;color:var(--leaf);background:none;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-block;transition:all .2s;}
+  .nav-btn:hover{background:var(--sky);}
+  .logout{border-color:rgba(0,0,0,.1);color:var(--muted);}
+  .logout:hover{border-color:var(--red);color:var(--red);background:#FEE2E2;}
+  .workspace{display:flex;flex:1;overflow:hidden;}
+  .map-area{flex:1;position:relative;background:#e8eef2;}
+  #map{width:100%;height:100%;}
+  .map-overlay{position:absolute;z-index:500;pointer-events:none;}
+  .map-overlay.top-left{top:1rem;left:1rem;}
+  .map-overlay.top-right{top:1rem;right:1rem;}
+  .map-overlay.bottom-left{bottom:2.5rem;left:1rem;}
+  .map-badge{background:white;border-radius:12px;padding:.6rem 1rem;box-shadow:0 4px 16px rgba(0,0,0,.12);font-size:.82rem;pointer-events:none;border:1px solid rgba(45,106,79,.1);}
+  .map-badge strong{color:var(--leaf);display:block;font-size:.88rem;margin-bottom:1px;}
+  .sel-crumb{background:var(--leaf);color:white;border-radius:100px;padding:.45rem 1rem;font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:.5rem;pointer-events:auto;}
+  .sel-crumb button{background:rgba(255,255,255,.25);border:none;color:white;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:.7rem;}
+  .mode-toggle{background:white;border-radius:12px;padding:.4rem;box-shadow:0 4px 14px rgba(0,0,0,.1);display:flex;gap:.3rem;pointer-events:auto;}
+  .mode-btn{border:none;background:none;padding:.45rem .9rem;border-radius:9px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);transition:all .2s;}
+  .mode-btn.active{background:var(--leaf);color:white;}
+  .zoom-hint{background:rgba(44,26,14,.85);color:rgba(255,255,255,.85);border-radius:10px;padding:.5rem .9rem;font-size:.78rem;}
+  .sidebar{width:var(--sidebar);background:white;border-left:1px solid rgba(0,0,0,.07);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+  .sb-scroll{flex:1;overflow-y:auto;}
+  .sb-scroll::-webkit-scrollbar{width:4px;}
+  .sb-scroll::-webkit-scrollbar-thumb{background:var(--sky);border-radius:4px;}
+  .sb-head{padding:1.4rem 1.6rem 1rem;border-bottom:1px solid var(--sky);}
+  .sb-head h2{font-family:'Playfair Display',serif;font-size:1.35rem;color:var(--soil);margin-bottom:.2rem;}
+  .sb-head p{font-size:.82rem;color:var(--muted);}
+  .loc-selector{padding:1.2rem 1.6rem;border-bottom:1px solid var(--sky);}
+  .loc-label{font-size:.72rem;font-weight:700;color:var(--soil);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.7rem;}
+  .loc-steps{display:flex;flex-direction:column;gap:.5rem;}
+  .loc-step{display:flex;align-items:center;gap:.7rem;padding:.7rem .9rem;border-radius:11px;border:1.5px solid rgba(0,0,0,.08);background:var(--cream);transition:all .3s;}
+  .loc-step.complete{border-color:rgba(45,106,79,.3);background:var(--sky);}
+  .loc-step.active{border-color:var(--harvest);background:rgba(212,160,23,.06);}
+  .loc-step.locked{opacity:.45;}
+  .step-num{width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.07);color:var(--muted);font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .loc-step.complete .step-num{background:var(--leaf);color:white;}
+  .loc-step.active .step-num{background:var(--harvest);color:white;}
+  .step-info{flex:1;min-width:0;}
+  .step-info .si-label{font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+  .step-info .si-value{font-size:.88rem;font-weight:600;color:var(--soil);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .step-info .si-value.placeholder{color:var(--muted);font-weight:400;}
+  .loc-connector{width:1px;height:10px;background:rgba(0,0,0,.1);margin-left:21px;}
+  .sb-form{padding:1.2rem 1.6rem;}
+  .field{margin-bottom:1.1rem;}
+  .field-label{font-size:.72rem;font-weight:700;color:var(--soil);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.45rem;display:block;}
+  input,select{width:100%;padding:.75rem .9rem;border:1.5px solid rgba(0,0,0,.09);border-radius:10px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none;transition:all .2s;color:var(--text);}
+  input:focus,select:focus{border-color:var(--leaf);box-shadow:0 0 0 3px rgba(45,106,79,.1);background:white;}
+  .chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem;}
+  .chip{background:var(--sky);border:1.5px solid rgba(45,106,79,.12);color:var(--leaf);border-radius:100px;padding:.28rem .75rem;font-size:.74rem;cursor:pointer;transition:all .2s;font-weight:600;}
+  .chip:hover,.chip.active{background:var(--leaf);color:white;border-color:var(--leaf);}
+  .btn-analyse{width:100%;padding:.95rem;border:none;border-radius:12px;background:var(--leaf);color:white;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .28s;box-shadow:0 4px 18px rgba(45,106,79,.3);display:flex;align-items:center;justify-content:center;gap:.5rem;}
+  .btn-analyse:hover:not(:disabled){background:#1f4d39;transform:translateY(-2px);}
+  .btn-analyse:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+  .hint{background:linear-gradient(135deg,rgba(45,106,79,.05),rgba(82,183,136,.04));border-left:3px solid var(--sprout);border-radius:0 10px 10px 0;padding:.8rem .9rem;font-size:.8rem;color:var(--muted);line-height:1.6;margin-top:.8rem;}
+  .hint strong{color:var(--leaf);}
+
+  /* DEBUG PANEL */
+  .debug-panel{background:#1a1a2e;border-top:2px solid var(--harvest);padding:1rem 1.6rem;font-family:monospace;font-size:.72rem;color:#e0e0e0;}
+  .debug-panel h4{color:var(--harvest);margin-bottom:.5rem;font-size:.78rem;}
+  .debug-panel .dline{color:#88c999;margin:.2rem 0;}
+  .debug-panel .dline.err{color:#ff6b6b;}
+  .debug-panel .dline.warn{color:#ffd93d;}
+  .debug-toggle{width:100%;background:none;border:none;border-top:1px solid rgba(45,106,79,.15);padding:.6rem 1.6rem;font-size:.75rem;color:var(--muted);cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;}
+  .debug-toggle:hover{background:var(--sky);}
+
+  .sb-history{border-top:1px solid var(--sky);padding:1rem 1.6rem;}
+  .hist-head{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.7rem;}
+  .hist-item{display:flex;align-items:center;justify-content:space-between;padding:.5rem .6rem;border-radius:9px;cursor:pointer;transition:background .2s;}
+  .hist-item:hover{background:var(--sky);}
+  .hist-name{font-size:.82rem;font-weight:600;color:var(--soil);}
+  .hist-sub{font-size:.72rem;color:var(--muted);margin-top:1px;}
+  .hist-score{font-size:.85rem;font-weight:800;color:var(--leaf);}
+  .spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:sp .7s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  @media(max-width:900px){.workspace{flex-direction:column;}.map-area{height:55vh;}.sidebar{width:100%;border-left:none;border-top:1px solid rgba(0,0,0,.07);}nav{padding:.75rem 1rem;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="../index.html" class="logo">Krishi<span>Mitra</span></a>
+  <div class="nav-right">
+    <div class="user-pill">🌾 <span id="navUser">Farmer</span></div>
+    <a href="reference.html" class="nav-btn">📚 Crops</a>
+    <a href="contact.html" class="nav-btn">📬 Contact</a>
+    <button class="nav-btn logout" onclick="API.logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="workspace">
+
+  <!-- MAP -->
+  <div class="map-area">
+    <div id="map"></div>
+    <div class="map-overlay top-left" id="selCrumb" style="display:none">
+      <div class="sel-crumb">
+        <span id="crumbText">—</span>
+        <button onclick="clearSelection()" title="Clear">✕</button>
+      </div>
+    </div>
+    <div class="map-overlay top-right">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="modeState" onclick="setMode('state')">🗺 State</button>
+        <button class="mode-btn" id="modeDist" onclick="setMode('district')">📍 District</button>
+      </div>
+    </div>
+    <div class="map-overlay bottom-left">
+      <div class="zoom-hint" id="zoomHint">🖱 Click a state · Scroll to zoom</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-scroll">
+      <div class="sb-head">
+        <h2>🌾 Crop Advisor</h2>
+        <p>Select location on the map, then enter crop details</p>
+      </div>
+
+      <!-- Location display -->
+      <div class="loc-selector">
+        <div class="loc-label">📍 Selected Location</div>
+        <div class="loc-steps">
+          <div class="loc-step active" id="stepState">
+            <div class="step-num">1</div>
+            <div class="step-info">
+              <div class="si-label">State</div>
+              <div class="si-value placeholder" id="stateVal">Click a state on the map</div>
+            </div>
+          </div>
+          <div class="loc-connector"></div>
+          <div class="loc-step locked" id="stepDist">
+            <div class="step-num">2</div>
+            <div class="step-info">
+              <div class="si-label">District <span style="font-weight:400;opacity:.7">(optional)</span></div>
+              <div class="si-value placeholder" id="distVal">Select state first</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="sb-form">
+        <div class="field">
+          <label class="field-label">🌾 Crop to Analyse</label>
+          <input type="text" id="cropIn" placeholder="e.g. Rice, Wheat, Cotton…" autocomplete="off">
+          <div class="chips" id="cropChips">
+            <span class="chip" data-crop="Rice">🌾 Rice</span>
+            <span class="chip" data-crop="Wheat">🌿 Wheat</span>
+            <span class="chip" data-crop="Cotton">🪴 Cotton</span>
+            <span class="chip" data-crop="Sugarcane">🎋 Cane</span>
+            <span class="chip" data-crop="Mango">🥭 Mango</span>
+            <span class="chip" data-crop="Tomato">🍅 Tomato</span>
+            <span class="chip" data-crop="Soybean">🫘 Soy</span>
+            <span class="chip" data-crop="Mustard">🌻 Mustard</span>
+            <span class="chip" data-crop="Maize">🌽 Maize</span>
+            <span class="chip" data-crop="Potato">🥔 Potato</span>
+            <span class="chip" data-crop="Coconut">🥥 Coconut</span>
+            <span class="chip" data-crop="Coffee">☕ Coffee</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">📅 Planting Season</label>
+          <select id="seasonIn">
+            <option value="">Select season (optional)…</option>
+            <option value="Kharif">Kharif (Jun–Oct) – Monsoon</option>
+            <option value="Rabi">Rabi (Nov–Apr) – Winter</option>
+            <option value="Zaid">Zaid (Apr–Jun) – Summer</option>
+            <option value="Year-round">Year-round</option>
+          </select>
+        </div>
+
+        <button class="btn-analyse" id="analyzeBtn" onclick="doAnalyze()" disabled>
+          🔍 Analyse Crop Suitability
+        </button>
+        <div class="hint">
+          <strong>💡 How it works:</strong> State climate data (rainfall, temperature, soil N/P/K) is loaded from our CSV database and fed into a Random Forest + Extra Trees ensemble model.
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="sb-history" id="histSection" style="display:none">
+        <div class="hist-head">⏱ Recent Analyses</div>
+        <div id="histList"></div>
+      </div>
+    </div>
+
+    <!-- Debug toggle -->
+    <button class="debug-toggle" onclick="toggleDebug()" id="debugToggle">🔧 Show Debug Info</button>
+    <div class="debug-panel" id="debugPanel" style="display:none">
+      <h4>🔧 Debug — Request Sent to Backend</h4>
+      <div id="debugLines">
+        <div class="dline warn">Select a state and run analysis to see debug info</div>
+      </div>
+    </div>
+
+  </div><!-- /.sidebar -->
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Cache-busted api.js load -->
+<script src="../js/api.js?v=5"></script>
+<script>
+// ── Auth & init ───────────────────────────────────────────────────────────────
+API.requireAuth();
+const user = API.getUser();
+document.getElementById('navUser').textContent = user?.name || 'Farmer';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let selectedState    = '';
+let selectedDistrict = '';
+let mapMode          = 'state';
+let stateLayer       = null;
+let districtGroup    = null;
+let districtGeoJSON  = null;
+
+// ── Debug helpers ─────────────────────────────────────────────────────────────
+function debugLog(msg, type='normal') {
+  const lines = document.getElementById('debugLines');
+  const d = document.createElement('div');
+  d.className = 'dline' + (type === 'err' ? ' err' : type === 'warn' ? ' warn' : '');
+  d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  lines.appendChild(d);
+  // Keep last 20 lines
+  while (lines.children.length > 20) lines.removeChild(lines.firstChild);
+}
+
+function toggleDebug() {
+  const panel = document.getElementById('debugPanel');
+  const btn   = document.getElementById('debugToggle');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  btn.textContent = panel.style.display === 'none' ? '🔧 Show Debug Info' : '🔧 Hide Debug Info';
+}
+
+// ── Map ───────────────────────────────────────────────────────────────────────
+const map = L.map('map', {center:[22,82],zoom:5,minZoom:4,maxZoom:10,attributionControl:false});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
+map.setMaxBounds([[4,60],[40,100]]);
+
+const STYLES = {
+  state:    {def:{fillColor:'#A8D5BA',weight:1.5,color:'#fff',fillOpacity:.75},
+             hov:{fillColor:'#52B788',weight:2,color:'#fff',fillOpacity:.92},
+             sel:{fillColor:'#2D6A4F',weight:2.5,color:'#fff',fillOpacity:1}},
+  district: {def:{fillColor:'#C8E6D4',weight:.8,color:'#fff',fillOpacity:.7},
+             hov:{fillColor:'#74C69D',weight:1.2,color:'#fff',fillOpacity:.92},
+             sel:{fillColor:'#1B4332',weight:1.5,color:'#fff',fillOpacity:1}},
+};
+
+fetch('https://raw.githubusercontent.com/geohacker/india/master/state/india_state.geojson')
+  .then(r => r.json())
+  .then(data => {
+    stateLayer = L.geoJSON(data, {
+      style: STYLES.state.def,
+      onEachFeature(feat, layer) {
+        const name = feat.properties.NAME_1 || feat.properties.name || 'Unknown';
+        layer.bindTooltip(`<strong>${name}</strong>`, {permanent:false, direction:'auto'});
+        layer.on({
+          mouseover: e => { if(stateLayer._sel !== e.target) e.target.setStyle(STYLES.state.hov); },
+          mouseout:  e => { if(stateLayer._sel !== e.target) e.target.setStyle(STYLES.state.def); },
+          click: e => {
+            if (stateLayer._sel && stateLayer._sel !== e.target) stateLayer._sel.setStyle(STYLES.state.def);
+            e.target.setStyle(STYLES.state.sel);
+            stateLayer._sel = e.target;
+            selectState(name);
+            map.fitBounds(e.target.getBounds(), {padding:[40,40], maxZoom:8});
+          }
+        });
+      }
+    }).addTo(map);
+    stateLayer._sel = null;
+    map.fitBounds([[6,68],[36,98]]);
+    debugLog('State GeoJSON loaded ✓');
+  })
+  .catch(e => debugLog('State GeoJSON failed: ' + e.message, 'err'));
+
+function selectState(name) {
+  selectedState    = name;
+  selectedDistrict = '';
+  document.getElementById('stateVal').textContent = name;
+  document.getElementById('stateVal').classList.remove('placeholder');
+  document.getElementById('stepState').className = 'loc-step complete';
+  document.getElementById('stepDist').className  = 'loc-step active';
+  document.getElementById('distVal').textContent  = 'Switch to District mode to pick one';
+  document.getElementById('distVal').classList.add('placeholder');
+  updateCrumb();
+  checkReady();
+  document.getElementById('zoomHint').textContent = `✓ ${name} selected · Switch to District for deeper analysis`;
+  debugLog(`State selected: "${name}"`);
+}
+
+function setMode(mode) {
+  mapMode = mode;
+  document.getElementById('modeState').classList.toggle('active', mode==='state');
+  document.getElementById('modeDist').classList.toggle('active', mode==='district');
+  if (mode === 'district') {
+    if (!selectedState) { alert('Please select a state first.'); setMode('state'); return; }
+    loadDistricts();
+  } else {
+    if (districtGroup) { map.removeLayer(districtGroup); districtGroup=null; }
+    if (stateLayer)    stateLayer.addTo(map);
+  }
+}
+
+async function loadDistricts() {
+  document.getElementById('zoomHint').textContent = '⏳ Loading districts…';
+  debugLog(`Loading districts for: ${selectedState}`);
+  try {
+    if (!districtGeoJSON) {
+      const r = await fetch('https://raw.githubusercontent.com/geohacker/india/master/district/india_district.geojson');
+      districtGeoJSON = await r.json();
+      debugLog('District GeoJSON loaded ✓');
+    }
+    const sn = selectedState.toLowerCase();
+    const feats = districtGeoJSON.features.filter(f => {
+      const s = (f.properties.NAME_1 || f.properties.ST_NM || '').toLowerCase();
+      return s.includes(sn.slice(0,5)) || sn.includes(s.slice(0,5));
+    });
+    if (!feats.length) { alert(`Districts not found for ${selectedState}.`); setMode('state'); return; }
+
+    if (stateLayer) map.removeLayer(stateLayer);
+    if (districtGroup) map.removeLayer(districtGroup);
+    districtGroup = L.geoJSON({type:'FeatureCollection',features:feats},{
+      style: STYLES.district.def,
+      onEachFeature(feat, layer) {
+        const dname = feat.properties.NAME_2 || feat.properties.DISTRICT || 'District';
+        layer.bindTooltip(`<strong>${dname}</strong><br><small>${selectedState}</small>`,{permanent:false});
+        layer.on({
+          mouseover: e => { if(!layer._s) e.target.setStyle(STYLES.district.hov); },
+          mouseout:  e => { if(!layer._s) e.target.setStyle(STYLES.district.def); },
+          click: e => {
+            if (districtGroup._sel) { districtGroup._sel.setStyle(STYLES.district.def); districtGroup._sel._s=false; }
+            e.target.setStyle(STYLES.district.sel); e.target._s=true; districtGroup._sel=e.target;
+            selectDistrict(dname);
+          }
+        });
+      }
+    }).addTo(map);
+    districtGroup._sel = null;
+    map.fitBounds(districtGroup.getBounds(), {padding:[30,30]});
+    document.getElementById('zoomHint').textContent = `📍 Click a district in ${selectedState}`;
+  } catch(e) {
+    debugLog('Districts failed: ' + e.message, 'err');
+    alert('Could not load districts.'); setMode('state');
+  }
+}
+
+function selectDistrict(name) {
+  selectedDistrict = name;
+  document.getElementById('distVal').textContent = name;
+  document.getElementById('distVal').classList.remove('placeholder');
+  document.getElementById('stepDist').className = 'loc-step complete';
+  updateCrumb();
+  debugLog(`District selected: "${name}"`);
+}
+
+function clearSelection() {
+  selectedState=''; selectedDistrict='';
+  if (stateLayer) { if(stateLayer._sel) {stateLayer._sel.setStyle(STYLES.state.def); stateLayer._sel=null;} stateLayer.addTo(map); }
+  if (districtGroup) { map.removeLayer(districtGroup); districtGroup=null; }
+  document.getElementById('stateVal').textContent='Click a state on the map'; document.getElementById('stateVal').classList.add('placeholder');
+  document.getElementById('distVal').textContent='Select state first'; document.getElementById('distVal').classList.add('placeholder');
+  document.getElementById('stepState').className='loc-step active';
+  document.getElementById('stepDist').className='loc-step locked';
+  document.getElementById('selCrumb').style.display='none';
+  setMode('state'); map.fitBounds([[6,68],[36,98]]); checkReady();
+}
+
+function updateCrumb() {
+  const crumb=document.getElementById('selCrumb'), text=document.getElementById('crumbText');
+  if (selectedState) {
+    text.textContent = selectedDistrict ? `${selectedDistrict}, ${selectedState}` : selectedState;
+    crumb.style.display='flex';
+  } else { crumb.style.display='none'; }
+}
+
+// ── Crop chips ────────────────────────────────────────────────────────────────
+document.getElementById('cropChips').addEventListener('click', e => {
+  const chip=e.target.closest('.chip'); if(!chip) return;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  document.getElementById('cropIn').value=chip.dataset.crop;
+  checkReady();
+});
+document.getElementById('cropIn').addEventListener('input',()=>{
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); checkReady();
+});
+function checkReady() {
+  document.getElementById('analyzeBtn').disabled = !(selectedState && document.getElementById('cropIn').value.trim());
+}
+
+// ── THE KEY FUNCTION — correct 4-param call ────────────────────────────────
+async function doAnalyze() {
+  const crop   = document.getElementById('cropIn').value.trim();
+  const season = document.getElementById('seasonIn').value;
+
+  if (!selectedState) { alert('Please click a state on the map.'); return; }
+  if (!crop)           { alert('Please enter or select a crop.'); return; }
+
+  // ── VERIFY: log exactly what we're sending ─────────────────────────────────
+  const requestBody = { state: selectedState, district: selectedDistrict, crop, season };
+  debugLog(`Sending: state="${selectedState}" district="${selectedDistrict}" crop="${crop}" season="${season}"`);
+  console.log('[KrishiMitra] API request body:', requestBody);
+  // ──────────────────────────────────────────────────────────────────────────
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Running Analysis…';
+
+  try {
+    // ── CORRECT CALL: state and district as SEPARATE parameters ──────────────
+    const result = await API.runAnalysis(selectedState, selectedDistrict, crop, season);
+    // ────────────────────────────────────────────────────────────────────────
+
+    debugLog(`Response: score=${result.data?.suitability_score} rating=${result.data?.rating} source=${result.data?.data_source}`);
+
+    sessionStorage.setItem('km_result', JSON.stringify(result.data));
+    sessionStorage.setItem('km_analysis_id', result.analysis_id);
+    sessionStorage.setItem('km_query', JSON.stringify({
+      location: result.data?.location_display || `${selectedDistrict ? selectedDistrict+', ' : ''}${selectedState}`,
+      state:    selectedState,
+      district: selectedDistrict,
+      crop, season
+    }));
+    window.location.href = 'output.html';
+  } catch(err) {
+    debugLog('Error: ' + err.message, 'err');
+    alert('Analysis failed: ' + (err.message || 'Is backend running on port 8000?'));
+    btn.disabled=false;
+    btn.innerHTML='🔍 Analyse Crop Suitability';
+  }
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    const {history} = await API.getHistory();
+    if (history?.length) {
+      document.getElementById('histSection').style.display='block';
+      const list=document.getElementById('histList');
+      history.slice(0,5).forEach(h=>{
+        const d=new Date(h.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+        const el=document.createElement('div'); el.className='hist-item';
+        el.innerHTML=`<div><div class="hist-name">${h.result?.crop_emoji||'🌱'} ${h.crop} · ${h.location||h.state}</div><div class="hist-sub">${h.season||'General'} · ${d}</div></div><div class="hist-score">${h.result?.suitability_score??'?'}</div>`;
+        el.onclick=()=>{sessionStorage.setItem('km_analysis_id',h._id);sessionStorage.removeItem('km_result');window.location.href='output.html';};
+        list.appendChild(el);
+      });
+    }
+  } catch(e) { debugLog('History load failed: ' + e.message, 'warn'); }
+})();
+
+// Show api.js version in debug
+debugLog(`api.js loaded - runAnalysis params: (state, district, crop, season)`);
+</script>
+</body>
+</html>

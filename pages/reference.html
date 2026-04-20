@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crop Database</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--soil:#2C1A0E;--leaf:#2D6A4F;--sprout:#52B788;--harvest:#D4A017;--sky:#E8F5E9;--cream:#FFF8F0;--text:#1A1A1A;--muted:#6B7280;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--cream);}
+
+  nav{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 3rem;background:white;border-bottom:1px solid rgba(45,106,79,.1);position:sticky;top:0;z-index:100;}
+  .logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:var(--leaf);text-decoration:none;}
+  .logo span{color:var(--harvest);}
+  .nav-links{display:flex;gap:1.2rem;align-items:center;}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;transition:color .2s;padding:.4rem .8rem;border-radius:100px;}
+  .nav-links a:hover{color:var(--leaf);background:var(--sky);}
+  .nav-links .cta{background:var(--leaf);color:white!important;font-weight:600;}
+  .nav-links .cta:hover{background:#1f4d39;color:white!important;}
+
+  .page-wrap{max-width:1020px;margin:0 auto;padding:3rem 2rem 5rem;}
+
+  .page-head{margin-bottom:2.5rem;}
+  .page-head h1{font-family:'Playfair Display',serif;font-size:2.4rem;color:var(--soil);margin-bottom:.5rem;}
+  .page-head p{color:var(--muted);font-size:.95rem;max-width:520px;line-height:1.65;}
+
+  .search-row{display:flex;gap:1rem;margin-bottom:2rem;align-items:center;}
+  .search-bar{flex:1;padding:.88rem 1.2rem;border:1.5px solid rgba(0,0,0,.1);border-radius:12px;background:white;font-family:'DM Sans',sans-serif;font-size:1rem;outline:none;transition:all .2s;color:var(--text);}
+  .search-bar:focus{border-color:var(--leaf);box-shadow:0 0 0 3px rgba(45,106,79,.1);}
+  .crop-count{color:var(--muted);font-size:.85rem;white-space:nowrap;}
+
+  .loading-msg{text-align:center;padding:4rem;color:var(--muted);}
+  .spin{display:inline-block;width:20px;height:20px;border:2.5px solid rgba(45,106,79,.2);border-top-color:var(--leaf);border-radius:50%;animation:sp .7s linear infinite;margin-right:.5rem;vertical-align:middle;}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .crops-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem;}
+  .crop-card{background:white;border-radius:18px;padding:1.6rem;border:1.5px solid rgba(0,0,0,.06);transition:all .28s;cursor:default;}
+  .crop-card:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,.1);border-color:rgba(45,106,79,.15);}
+  .ctop{display:flex;align-items:center;gap:.9rem;margin-bottom:1.1rem;}
+  .cemoji{font-size:2.2rem;line-height:1;}
+  .ctop h3{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--soil);margin-bottom:2px;}
+  .ctype{font-size:.75rem;color:var(--muted);font-weight:500;}
+  .tags{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.9rem;}
+  .tag{display:inline-block;background:var(--sky);color:var(--leaf);border-radius:100px;padding:.22rem .7rem;font-size:.73rem;font-weight:600;}
+  .cinfo{font-size:.82rem;color:var(--muted);line-height:1.65;border-top:1px solid var(--sky);padding-top:.8rem;margin-top:.3rem;}
+  .cinfo span{display:block;}
+  .cinfo strong{color:var(--soil);}
+  .msps{margin-top:.5rem;background:rgba(212,160,23,.1);border-radius:8px;padding:.35rem .7rem;font-size:.78rem;color:#92400E;font-weight:600;display:inline-block;}
+
+  .no-res{text-align:center;padding:4rem 2rem;color:var(--muted);}
+  .no-res .icon{font-size:3rem;margin-bottom:1rem;}
+
+  @media(max-width:800px){
+    .crops-grid{grid-template-columns:1fr 1fr;}
+    nav{padding:1rem 1.5rem;}
+  }
+  @media(max-width:500px){
+    .crops-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<nav>
+  <a href="../index.html" class="logo">Agriculture<span>Advisory System</span></a>
+  <div class="nav-links">
+    <a href="../index.html">Home</a>
+    <a href="contact.html">Contact</a>
+    <a href="input.html" class="cta" id="advisorLink">Crop Advisor →</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div class="page-head">
+    <h1>🌾 Crop Database</h1>
+    <p>Browse Indian crops with growing conditions, rainfall requirements, soil types, and market prices. All data powers our AI advisory engine.</p>
+  </div>
+
+  <div class="search-row">
+    <input class="search-bar" id="searchBar" type="text" placeholder="🔍 Search by crop name or type…" oninput="search()">
+    <div class="crop-count" id="cropCount"></div>
+  </div>
+
+  <div id="grid">
+    <div class="loading-msg"><span class="spin"></span>Loading crop data from server…</div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script>
+  // Fix advisor link if logged in
+  if (API.isLoggedIn()) {
+    document.getElementById('advisorLink').href = 'input.html';
+  } else {
+    document.getElementById('advisorLink').href = 'login.html';
+  }
+
+  let allCrops = [];
+
+  const FALLBACK = [
+    {emoji:"🌾",name:"Rice (Paddy)",key:"rice",seasons:["Kharif"],rainfall:"1000–2000 mm",temperature:"22–35°C",soil:"Clay, Loamy",msps:"₹2183/quintal",yield_range:"4–6 t/ha"},
+    {emoji:"🌿",name:"Wheat",key:"wheat",seasons:["Rabi"],rainfall:"300–1000 mm",temperature:"10–25°C",soil:"Loamy, Sandy loam",msps:"₹2275/quintal",yield_range:"3–5 t/ha"},
+    {emoji:"🪴",name:"Cotton",key:"cotton",seasons:["Kharif"],rainfall:"500–1000 mm",temperature:"21–30°C",soil:"Black Vertisol, Loamy",msps:"₹6620/quintal",yield_range:"1.5–3 t/ha"},
+    {emoji:"🎋",name:"Sugarcane",key:"sugarcane",seasons:["Year-round"],rainfall:"750–1500 mm",temperature:"20–35°C",soil:"Deep loam, Alluvial",msps:"₹315/quintal",yield_range:"60–100 t/ha"},
+    {emoji:"🥭",name:"Mango",key:"mango",seasons:["Year-round"],rainfall:"750–1250 mm",temperature:"24–27°C",soil:"Alluvial, Sandy loam",msps:"Market price",yield_range:"10–20 t/ha"},
+    {emoji:"🍅",name:"Tomato",key:"tomato",seasons:["Rabi","Zaid"],rainfall:"600–1300 mm",temperature:"18–27°C",soil:"Loamy, Sandy loam",msps:"Market price",yield_range:"20–30 t/ha"},
+    {emoji:"🫘",name:"Soybean",key:"soybean",seasons:["Kharif"],rainfall:"600–1000 mm",temperature:"26–30°C",soil:"Clay loam, Loamy",msps:"₹4600/quintal",yield_range:"1.5–2.5 t/ha"},
+    {emoji:"🌻",name:"Mustard",key:"mustard",seasons:["Rabi"],rainfall:"250–400 mm",temperature:"10–25°C",soil:"Sandy loam, Loamy",msps:"₹5650/quintal",yield_range:"1–1.8 t/ha"},
+    {emoji:"🌽",name:"Maize",key:"maize",seasons:["Kharif","Rabi"],rainfall:"500–750 mm",temperature:"21–27°C",soil:"Loamy, Sandy loam",msps:"₹2090/quintal",yield_range:"4–7 t/ha"},
+    {emoji:"🥜",name:"Groundnut",key:"groundnut",seasons:["Kharif"],rainfall:"500–1300 mm",temperature:"25–30°C",soil:"Sandy loam, Loamy",msps:"₹6377/quintal",yield_range:"1.5–3 t/ha"},
+    {emoji:"🥔",name:"Potato",key:"potato",seasons:["Rabi"],rainfall:"500–700 mm",temperature:"15–25°C",soil:"Sandy loam, Loamy",msps:"Market price",yield_range:"20–30 t/ha"},
+    {emoji:"🧅",name:"Onion",key:"onion",seasons:["Rabi","Kharif"],rainfall:"650–750 mm",temperature:"13–24°C",soil:"Sandy loam, Loamy",msps:"Market price",yield_range:"15–25 t/ha"},
+    {emoji:"🍌",name:"Banana",key:"banana",seasons:["Year-round"],rainfall:"1000–2000 mm",temperature:"26–30°C",soil:"Loamy, Alluvial",msps:"Market price",yield_range:"30–40 t/ha"},
+    {emoji:"🌶️",name:"Chilli",key:"chilli",seasons:["Kharif","Rabi"],rainfall:"600–1200 mm",temperature:"20–30°C",soil:"Loamy, Sandy loam",msps:"Market price",yield_range:"1.5–3 t/ha"},
+  ];
+
+  async function loadCrops() {
+    try {
+      const d = await API.getCrops();
+      allCrops = d.crops || [];
+      renderCrops(allCrops);
+    } catch {
+      allCrops = FALLBACK;
+      renderCrops(allCrops);
+    }
+  }
+
+  function renderCrops(crops) {
+    const grid = document.getElementById('grid');
+    document.getElementById('cropCount').textContent = `${crops.length} crop${crops.length!==1?'s':''} found`;
+
+    if (!crops.length) {
+      grid.innerHTML = `<div class="no-res"><div class="icon">🔍</div><p>No crops found matching your search.</p></div>`;
+      return;
+    }
+
+    grid.innerHTML = `<div class="crops-grid">${crops.map(c => `
+      <div class="crop-card">
+        <div class="ctop">
+          <span class="cemoji">${c.emoji||'🌱'}</span>
+          <div>
+            <h3>${c.name}</h3>
+            <div class="ctype">${c.key || ''}</div>
+          </div>
+        </div>
+        <div class="tags">
+          ${(c.seasons||[]).map(s=>`<span class="tag">📅 ${s}</span>`).join('')}
+        </div>
+        <div class="cinfo">
+          <span>💧 <strong>Rainfall:</strong> ${c.rainfall||'—'}</span>
+          <span>🌡️ <strong>Temp:</strong> ${c.temperature||'—'}</span>
+          <span>🪨 <strong>Soil:</strong> ${c.soil||'—'}</span>
+          <span>📈 <strong>Yield:</strong> ${c.yield_range||'—'}</span>
+          <span class="msps">💰 ${c.msps||'Market price'}</span>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  function search() {
+    const q = document.getElementById('searchBar').value.toLowerCase();
+    if (!q) { renderCrops(allCrops); return; }
+    renderCrops(allCrops.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.key||'').toLowerCase().includes(q)
+    ));
+  }
+
+  loadCrops();
+</script>
+</body>
+</html>
