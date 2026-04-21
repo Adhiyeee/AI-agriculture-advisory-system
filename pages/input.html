@@ -219,8 +219,13 @@
 <script>
 // ── Auth & init ───────────────────────────────────────────────────────────────
 // ✅ Only require login locally
+// 🚫 Disable auth completely in LIVE
 if (window.location.hostname === "localhost") {
   API.requireAuth();
+} else {
+  // clear any old login data
+  localStorage.removeItem("km_token");
+  localStorage.removeItem("km_user");
 }
 const user = API.getUser();
 document.getElementById('navUser').textContent = user?.name || 'Farmer';
