@@ -218,7 +218,10 @@
 <script src="../js/api.js?v=5"></script>
 <script>
 // ── Auth & init ───────────────────────────────────────────────────────────────
-API.requireAuth();
+// ✅ Only require login locally
+if (window.location.hostname === "localhost") {
+  API.requireAuth();
+}
 const user = API.getUser();
 document.getElementById('navUser').textContent = user?.name || 'Farmer';
 
