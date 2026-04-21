@@ -118,6 +118,12 @@
   }
 </style>
 </head>
+<script>
+  // 🔥 Skip login in LIVE
+  if (window.location.hostname !== "localhost") {
+    window.location.href = "pages/input.html";
+  }
+</script>
 <body>
 
 <nav>
