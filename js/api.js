@@ -77,8 +77,10 @@ const API = (() => {
   async function getStateData(state){ return request(`/ml/state/${encodeURIComponent(state)}`); }
 
   function requireAuth() {
-    if (!isLoggedIn()) window.location.href = resolveRoot("pages/login.html");
+  if (!isLoggedIn()) {
+    window.location.href = resolveRoot("pages/login.html");
   }
+}
 
   return {
     sendOTP, verifyOTP, getMe, logout,
