@@ -4,7 +4,9 @@
  * matching the backend AnalysisRequest schema exactly.
  */
 const API = (() => {
-  const BASE_URL = "http://localhost:8000";
+  const BASE_URL = window.location.hostname === "localhost"
+    ? "http://localhost:8000"
+    : "https://agri-backend-pjw5.onrender.com";
 
   function getToken()     { return localStorage.getItem("km_token"); }
   function setToken(t)    { localStorage.setItem("km_token", t); }
